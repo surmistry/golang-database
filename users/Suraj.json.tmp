@@ -1,0 +1,12 @@
+{
+	"Name": "Suraj",
+	"Age": 23,
+	"Contact": "2334445036",
+	"Company": "Suraj Mistry Inc",
+	"Address": {
+		"City": "",
+		"State": "",
+		"Country": "",
+		"Pincode": 0
+	}
+}

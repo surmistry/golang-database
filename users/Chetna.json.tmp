@@ -1,0 +1,12 @@
+{
+	"Name": "Chetna",
+	"Age": 23,
+	"Contact": "2334445036",
+	"Company": "Mistry Dental",
+	"Address": {
+		"City": "",
+		"State": "",
+		"Country": "",
+		"Pincode": 0
+	}
+}
