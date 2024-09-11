@@ -85,13 +85,13 @@ func (d *Driver) Write(collection, resource string, v interface{}) error {
 	if err := os.WriteFile(tmpPath, b, 0644); err != nil {
 		return err
 	}
-	return err
+	return os.Rename(tmpPath, fnlPath)
 }
 
 func (d *Driver) Read(collection, resource string, v interface{}) error {
 
 	if collection == "" {
-		return fmt.Errorf("Missing collection - no place to save record")
+		return fmt.Errorf("Missing collection - unable to read")
 	}
 	if resource == "" {
 		return fmt.Errorf("Missing resource - unable to save record (no name)!")
@@ -109,8 +109,46 @@ func (d *Driver) Read(collection, resource string, v interface{}) error {
 	return json.Unmarshal(b, &v)
 }
 
-// func (d *Driver) ReadAll()      {}
-// func (d *Driver) Delete() error {}
+func (d *Driver) ReadAll(collection string) ([]string, error) {
+	if collection == "" {
+		return nil, fmt.Errorf("Missing collection - unable to read")
+	}
+	dir := filepath.Join(d.dir, collection)
+	if _, err := stat(dir); err != nil {
+		return nil, err
+	}
+	files, _ := os.ReadDir(dir)
+	var records []string
+
+	for _, file := range files {
+		b, err := os.ReadFile(filepath.Join(dir, file.Name()))
+		if err != nil {
+			return nil, err
+		}
+
+		records = append(records, string(b))
+	}
+	return records, nil
+}
+
+func (d *Driver) Delete(collection, resource string) error {
+	path := filepath.Join(collection, resource)
+	mutex := d.getOrCreateMutex(collection)
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	dir := filepath.Join(d.dir, path)
+	switch fi, err := stat(dir); {
+	case fi == nil, err != nil:
+		return fmt.Errorf("Unable to find to the file or directory named %v\n", path)
+	case fi.Mode().IsDir():
+		return os.RemoveAll(dir)
+	case fi.Mode().IsRegular():
+		return os.RemoveAll(dir + ".json")
+	}
+	return nil
+}
+
 func (d *Driver) getOrCreateMutex(collection string) *sync.Mutex {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
@@ -172,22 +210,22 @@ func main() {
 		})
 	}
 
-	// records, err := db.ReadAll("users")
-	// if err != nil {
-	// 	fmt.Println("error", err)
-	// }
-	// fmt.Println(records)
+	records, err := db.ReadAll("users")
+	if err != nil {
+		fmt.Println("error", err)
+	}
+	fmt.Println(records)
 
-	// allusers := []User{}
+	allusers := []User{}
 
-	// for _, f := range records {
-	// 	employeeFound := User{}
-	// 	if err := json.Unmarshal([]byte(f), &employeeFound); err != nil {
-	// 		fmt.Println("Error", err)
-	// 	}
-	// 	allusers = append(allusers, employeeFound)
-	// }
-	// fmt.Println(allusers)
+	for _, f := range records {
+		employeeFound := User{}
+		if err := json.Unmarshal([]byte(f), &employeeFound); err != nil {
+			fmt.Println("Error", err)
+		}
+		allusers = append(allusers, employeeFound)
+	}
+	fmt.Println(allusers)
 
 	//if err := db.Delete("user", "john"); err != nil{
 	//	fmt.Println("Error", err)
