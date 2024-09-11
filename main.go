@@ -227,9 +227,9 @@ func main() {
 	}
 	fmt.Println(allusers)
 
-	//if err := db.Delete("user", "john"); err != nil{
-	//	fmt.Println("Error", err)
-	//}
+	if err := db.Delete("users", "jayan"); err != nil {
+		fmt.Println("Error", err)
+	}
 
 	//if err := db.Delete("user", ""); err != nil {
 	//	fmt.Println("Error", err)
